@@ -1,0 +1,52 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage{listings}
+\geometry{margin=0.5in}
+
+\begin{document}
+\Large{\texttt{Name: Bhargey Mehta}}
+
+\Large{\texttt{SID : \space 201701074}}
+
+% \Large{\texttt{Info: Algorithmic Graph Theory - Project Proposal}}
+
+% \Large{\texttt{Date: 21 October 2020}}
+
+\begin{center}
+\huge{Project Proposal : Maximum Matching}
+\end{center}
+
+\section{Objectives}
+The main objective of this project will be to examine different algorithms to solve the different variants of Maximum Matching problem.
+
+\begin{itemize}
+    \item Unweighted General (Blossom Algorithm)
+    \item Unweighted Bipartite (Hopcroft-Karp Algorithm)
+    \item Weighted Bipartite (Hungarian Algorithm)
+\end{itemize}
+
+\section{Motivation}
+The motivation for the specialised case stems from the assignment problem which can be formulated using a bipartite network where one bipartition is an agent and another is a task with the edges denoting the cost incurred. 
+
+The latter algorithms are only applicable on bipartite graphs. The same problem for a general graph is solved by the Blossom Algorithm. Maximum matching in a general graph is encountered as a sub-problem in computational chemistry.
+
+\section{Methodology}
+For these algorithms, the proofs of correctness will be verified and their time complexities will be calculated. In additions to these, the parallel and distributed versions of the Blossom algorithm (for the general graph) will also be examined. Their proofs of correctness will be verified and message complexities will be calculated.
+
+\section{Workplan}
+\begin{enumerate}
+    \item The specialised case for bipartite graph will be handled first i.e. their proofs of correctness and the time complexity.
+    \item The sequential version of the Blossom algorithm will be done next. It's proof of correctness and time complexity will be calculated.
+    \item After the sequential version is complete, the parallel and distributed versions of the same Blossom algorithm will be handled. In addition to the proof of correctness, the message complexities will also be calculated for the distributed version.
+\end{enumerate}
+
+
+
+
+
+
+\end{document}

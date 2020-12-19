@@ -1,0 +1,170 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{hyperref}
+\geometry{margin=1in}
+
+\begin{document}
+\Large
+\section{Introduction}
+We are given a complete bipartite graph $G$ with $|X|=|Y|$ such that $X$ denotes the jobs and $Y$ denotes the agents. The edge weight $w(x, y)$ of edge $e(x, y)$ denotes the cost of doing job $y$ when assigned to agent $x$.
+
+We will first clarify some terminologies related to the algorithm.
+
+\subsection{Alternating Tree}
+A sub graph of $G$ which is a tree having an unsaturated root wrt some matching $M$ having the edges alternate between being in $M$ and not being in $M$ is called an alternating tree. Hence we can see that if a leaf node is unsaturated in this alternating tree, then the path from root to this leaf node is an augmenting path.
+
+\subsection{Labelling Function}
+A labelling function is a mapping $l: V \to Z$ such that it assigns an integer to each node in $G$. Hence $l(v)$ denotes the label of node $v \in G$.
+
+A labelling is called feasible if for every edge $e(x, y)$ we have,
+$$l(x)+l(y) \geq w(x, y)$$.
+
+\subsection{Equality Graph}
+Let $E_l$ denote the set of edges $e(x, y)$ such that wrt some labelling function $l$, the equality $l(x)+l(y) = w(x, y)$ holds.
+
+The graph $G_l$ formed by the vertices of $G$ and the edge set $E_l$ is called the equality graph $G_l$ wrt the labelling function.
+
+\section{Lemmas}
+
+\subsection{Kuhn-Munkres Lemma}
+The Kuhn-Munkres Lemma (abbreviated as KM Lemma from now on) is at the heart of this algorithm. It states that,
+
+KM Lemma: If $l$ is a feasible labelling and $M$ is a perfect matching in $G_l$ then $M$ is maximum weight matching in $G$.
+
+Let $M'$ be any perfect matching in $G$ not necessarily maximum and not necessarily in $G_l$. We have the weight $w(M') = \Sigma w(x, y)$ where $e(x, y) \in M'$.
+
+Since $M'$ is a perfect matching, each vertex appears only once in this summation. Since $l$ is feasible, we have $w(x, y) \leq l(x)+l(y)$, we get the following result.
+
+$$w(M') = \Sigma w(x, y) \leq \Sigma l(v)$$.
+
+Now consider a perfect matching $M$ in $G_l$. Note that by definition of $G_l$ we have $w(x, y) = l(x)+l(y)$. Hence we get the following result.
+
+$$w(M) = \Sigma w(x, y) = \Sigma l(v)$$
+
+Combining these results we get $W(M) \geq W(M')$ and hence $M$ is maximum weight matching in $G$.
+
+\subsection{Relabelling Lemma}
+We will now look at a relabelling lemma which will aid is in modifying a given feasible $l$ into another feasible labelling $l'$.
+
+If $S \subseteq X$ then let $N_l(S)$ denote the set of vertices $v \in Y$ such that for some $u \in X$, $e(u, v) \in E_l$.
+
+Relabelling Lemma: Let $S \subseteq X$ and let $T=N_l(S) \neq Y$, we have $$\alpha_l = \mathrm{min}(\{l(x)+l(y)-w(x, y) : x \in S, y \notin T\})$$
+
+$$l'(v) = 
+\begin{cases}
+l(v)-\alpha_l & v \in S \\
+l(v)+\alpha_l & v \in T \\
+l(v) & \mathrm{otherwise} \\
+\end{cases} $$ 
+
+is a feasible labelling such that
+\begin{enumerate}
+    \item If $e(x, y) \in L$ such that $x \in S, y \in T$, then $e(x, y) \in E_{l'}$.
+    \item If $e(x, y) \in L$ such that $x \notin S, y \notin T$, then $e(x, y) \in E_{l'}$.
+    \item $\exists$ edge $e(x, y)$ with $x \in S, y \notin T$ such that $e(x, y) \in E_{l'}$ 
+\end{enumerate}
+
+\newpage
+Proof
+\begin{enumerate}
+    \item $x \in S, y \in T$: The same amount is added on one side and subtracted on another so the sum remains the same. If $e(x, y) \in E_l$, then $l(x)+l(y) = w(x, y) = (l(x)-\alpha_l)+(l(y)+\alpha_l)$.
+    \item $x \in S, y \notin T$: In this case, for each edge, we have some slack about how much we can reduce $l(x)$, since $\alpha_l$ is the minimum of that slack, the labelling remains feasible. In addition the edge\/s which correspond to the minimum slack are now present in $E_{l'}$.
+    \item $x \notin S, y \in T$: In this case the label of $y$ is being increased by $\alpha_l$ hence $l'$ remains feasible.
+    \item $x \notin S, y \notin T$: The labelling remains the same, hence it is feasible.
+\end{enumerate}
+
+\section{Algorithm}
+
+Subroutine: FindAugmentingPath($G$, $l$, $M$) \dotfill
+
+\hspace{1cm} pick unsaturated vertex $u \in X$
+
+\hspace{1cm} $S \leftarrow \{u\}$ and $T \leftarrow \phi$
+
+\hspace{1cm} $P \leftarrow$ NULL
+
+\hspace{1cm} while $P$ is NULL (path not found)
+
+\hspace{2cm} if $N_l(S) = T$ 
+
+\hspace{3cm} $\alpha_l \leftarrow \mathrm{min}(\{l(x)+l(y)-w(x, y) : x \in S, y \notin T\})$
+
+\hspace{3cm} $l^*(v) \leftarrow 
+\begin{cases}
+l(v)-\alpha_l & v \in S \\
+l(v)+\alpha_l & v \in T \\
+l(v) & \mathrm{otherwise} \\
+\end{cases}$
+
+\hspace{2cm} $l \leftarrow l^*$
+
+\hspace{2cm} pick one $v$ from $\in N_l(S)-T$
+
+\hspace{2cm} if $v$ is unsaturated 
+
+\hspace{3cm} $P \leftarrow$ path from $v$ to root $u$
+
+\hspace{2cm} else
+
+\hspace{3cm} $z \leftarrow$ the matched vertex of $v$ by edge $e(v, z) \in M$
+
+\hspace{3cm} $S \leftarrow S \cup \{z\}$ and $T \leftarrow T \cup \{v\}$
+
+\hspace{1cm} return $P, l^*$
+
+\newpage
+
+Subroutine: HungarianMatching($G$) \dotfill
+
+\hspace{1cm} $M \leftarrow$ empty mathing
+
+\hspace{1cm} for all $x \in X$, $l(x) \leftarrow$ max($w(x, y)$)
+
+\hspace{1cm} for all $y \in Y$, $l(y) \leftarrow 0$ 
+
+\hspace{1cm} while $M$ is not perfect matching
+
+\hspace{2cm} $P, l \leftarrow$ FindAugmentingPath($G$, $l$, $M$)
+
+\hspace{2cm} $M \leftarrow$ augment $M$ with $P$
+
+\hspace{1cm} return $M$
+
+\section{Proof of Correctness}
+It is easy to see that the initial labelling function is feasible. 
+
+We claim that the alternating tree $T_u$ rooted $u$ in the augmenting path finding algorithm is always contained in the labelling even after we modify the labelling according to the relabelling lemma. This claim can be proved by induction as below.
+\begin{itemize}
+    \item Base Case: $T_u$ only contains $u$. It is trivial to see that the claim holds.
+    \item Assume that the edges of $T_u$ are in $E_l$. Note that this is equivalent to saying $T_u \cap X = S$ and $T_u \cap Y = T$. But this means that every edge in $T_u$ is such that one of its end points is in $S$ and another in $T$. Hence by reason \#1 of the relabelling lemma explained in section 2, all these edges are present in $E_{l^*}$ as well.
+    \item We also add new edges but those are already according to the updated labelling and hence present $T_u$ according to $E_{l^*}$ as well.
+\end{itemize}
+
+Hence we prove that our alternating tree $T_u$ always increases in size. And since $M$ was not perfect, we are guaranteed to find an unsaturated vertex $z$ eventually which would provide us the augmenting path $P$..
+
+Note that we are always selecting edges from the set $E_l$ and by definition these edges are present in $G_l$. We have also proved in the relabelling lemma that the modified labelling is always feasible and have also proved by induction that the edges are always present in the modified labelling. 
+
+This means that the matching eventually becomes a perfect matching in $G_l$ and by the KM Lemma proved earlier in section 2, the resultant matching will be a maximum weight matching in $G$.
+
+\section{Time Complexity}
+\begin{enumerate}
+    \item In the augmenting path finding algorithm, the augmenting path would be found after at max O$(|V|)$ iterations of the outer loop.
+    \item The minimum of the slacks i.e. $\alpha_l$ can be found in O($|V|$) time and all the new labelling can be obtained after O($|V|$) updates. Adding $v$ to $T$ and $z$ to $S$ is constant time task Hence one single iteration takes O($|V|$) time.
+    \item The overall time complexity of the path finding algorithm is O($|V|^2$) since there are O($|V|$) iterations each costing O($|V|$) time.
+    \item The Hungarian algorithm augments the matching. A single augmentation increases the size of the matching by 1 and hence there will be O($|V|$) iterations of the path finding algorithm.
+\end{enumerate}
+Thus the overall time complexity of the Hungarian algorithm would be O($|V|^3$).
+
+\section{References}
+
+\begin{itemize}
+    \item \href{http://www.cse.ust.hk/~golin/COMP572/Notes/Matching.pdf}{\textcolor{blue}{Notes by Dr. Mordecai J Golin (Clickable URL)}}
+\end{itemize}
+
+
+\end{document}
