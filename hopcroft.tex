@@ -6,137 +6,127 @@
 \usepackage{mathtools}
 \usepackage{listings}
 \usepackage{hyperref}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{float}
 \geometry{margin=1in}
 
 \begin{document}
-\Large{\texttt{Name: Bhargey Mehta}}
-
-\Large{\texttt{SID : \space 201701074}}
-
-\Large{\texttt{Info: AGT - Project - Sequential HopcroftKarp}}
 
 \section{Algorithm}
 We will be using the Hopcroft-Karp algorithm which produces a maximum matching in a bipartite graph. Note that $X$ and $Y$ are the bipartitions of the bipartite graph $G$ and $M$ is some matching of $G$. If $G$ has a perfect matching then any maximum matching is also a perfect matching.
 
 \vspace{0.5cm}
 
-Subroutine: BFS($X, Y, M$) \dotfill
+\begin{algorithm}[!h]
+\caption{BFS}
+\KwData{$X, Y, M$}
+\KwResult{$G_{\mathrm{BFS}}$}
 
-\hspace{1cm} $G_{\mathrm{BFS}} \leftarrow$ empty graph
+$G_{\mathrm{BFS}} \leftarrow$ empty graph
 
-\hspace{1cm} visited $\leftarrow$ empty Set
+visited $\leftarrow$ empty Set
 
-\hspace{1cm} $Q \leftarrow$ empty Queue
+$Q \leftarrow$ empty Queue
 
-\hspace{1cm} for each node $v$ in $B_1$
+\For{each node $v$ in $B_1$}{
+    \If{$v \notin M$}{
+        enqueue $v$ in $Q$
 
-\hspace{2cm} if $v \notin M$
+        add $v$ to visited
+    }
+}
+\While{$Q$ is NOT empty}{
 
-\hspace{3cm} enqueue $v$ in $Q$
+    $v \leftarrow$ dequeue from $Q$
 
-\hspace{3cm} add $v$ to visited
+    \uIf{$v \in X$}{
+        \For{each edge $(v, w)$ adjacent to $v$ such that $(v, w) \notin M$}{
+            add $(v, w)$ to $G_{\mathrm{BFS}}$
+        
+            enqueue $w$ in $Q$
+        
+            add $w$ to visited   
+        }
+    }\uElse{
+        \For{each edge $(v, w)$ adjacent to $v$ such that $(v, w) \in M$}{
+            add $(v, w)$ to $G_{\mathrm{BFS}}$
+    
+            enqueue $w$ in $Q$
+    
+            add $w$ to visited       
+        }
+    }
+}
 
-\hspace{1cm} while $Q$ is NOT empty
+return $G_{\mathrm{BFS}}$
+\end{algorithm}
 
-\hspace{2cm} $v \leftarrow$ dequeue from $Q$
+\begin{algorithm}[!h]
+\KwData{$G_{\mathrm{BFS}}, M, v$, visited, $P$}
+\KwResult{Boolean}
+\caption{ActualDFS}
+\If{$v$ in visited}{return False}
 
-\hspace{2cm} if $v \in X$
+add $v$ to visited
 
-\hspace{3cm} for each edge $(v, w)$ adjacent to $v$ such that $(v, w) \notin M$
+\For{all edges $(v, w)$ adjacent to $v$ in $G_{\mathrm{BFS}}$}{
+    \If{($v \in X$ and $(v,w) \notin M$) or ($v \in Y$ and $(v,w) \in M$)}{skip edge}
+    
+    append $(v, w)$ to $P$
+    
+    \If{$w \notin M$}{
+        add $w$ to visited
+        return True
+    }
+    
+    foundPath $\leftarrow$ actualDFS($G_{\mathrm{BFS}}, M, w$, visited, $P$)
+    
+    \If{foundPath is True}{return True}
+    
+    remove $(v, w)$ from $P$
+}
+return False
+\end{algorithm}
 
-\hspace{4cm} add $(v, w)$ to $G_{\mathrm{BFS}}$
+\begin{algorithm}[!h]
+\caption{DFS (wrapper)}
+\KwData{$G_{\mathrm{BFS}}, M$}
+\KwResult{set of disjoint paths}
 
-\hspace{4cm} enqueue $w$ in $Q$
+visited $\leftarrow$ empty set
 
-\hspace{4cm} add $w$ to visited
+disjointPaths $\leftarrow$ empty set
 
-\hspace{2cm} else
+\For{each node $v$ in $Y$}{
+    \If{$v \notin M$}{
+        $P \leftarrow$ empty path 
 
-\hspace{3cm} for each edge $(v, w)$ adjacent to $v$ such that $(v, w) \in M$
+        ActualDFS($G_{\mathrm{BFS}}, M, v$, visited, $P$)
 
-\hspace{4cm} add $(v, w)$ to $G_{\mathrm{BFS}}$
+        add $P$ to disjointPaths if $P$ is NOT empty
+    }
+}
+return disjointPaths
+\end{algorithm}
 
-\hspace{4cm} enqueue $w$ in $Q$
+\begin{algorithm}[!h]
+\SetKwRepeat{Do}{do}{while}
+\caption{HopcroftKarp}
+\KwData{$X, Y, G$}
+\KwResult{$M^*$}
 
-\hspace{4cm} add $w$ to visited
+$M \leftarrow$ empty matching
 
-\hspace{1cm} return $G_{\mathrm{BFS}}$
+\Do{disjointPaths is NOT empty}{
+    $G_{\mathrm{BFS}} \leftarrow$ BFS($X, Y, M$)
 
-Subroutine: DFS($G_{\mathrm{BFS}}, M$) (wrapper function) \dotfill
+    disjointPaths $\leftarrow$ DFS($G_{\mathrm{BFS}}, M$)
+    
+    augment $M$ with each $P$ in disjointPaths
+}
+return $M$
+\end{algorithm}
 
-\hspace{1cm} visited $\leftarrow$ empty set
-
-\hspace{1cm} disjointPaths $\leftarrow$ empty set
-
-\hspace{1cm} for each node $v$ in $Y$
-
-\hspace{2cm} if $v \notin M$
-
-\hspace{3cm} $P \leftarrow$ empty path 
-
-\hspace{3cm} actualDFS($G_{\mathrm{BFS}}, M, v$, visited, $P$)
-
-\hspace{3cm} add $P$ to disjointPaths if $P$ is NOT empty
-
-\hspace{1cm} return disjointPaths
-
-\vspace{0.5cm}
-
-Subroutine: actualDFS($G_{\mathrm{BFS}}, M, v$, visited, $P$) \dotfill
-
-\hspace{1cm} if $v$ in visited
-
-\hspace{2cm} return False
-
-\hspace{1cm} add $v$ to visited
-
-\hspace{1cm} for all edges $(v, w)$ adjacent to $v$ in $G_{\mathrm{BFS}}$
-
-\hspace{2cm} if ($v \in X$ and $(v,w) \notin M$) or ($v \in Y$ and $(v,w) \in M$)
-
-\hspace{3cm} skip edge
-
-\hspace{2cm} append $(v, w)$ to $P$
-
-\hspace{2cm} if $w \notin M$
-
-\hspace{3cm} add $w$ to visited
-
-\hspace{3cm} return True
-
-\hspace{2cm} foundPath $\leftarrow$ actualDFS($G_{\mathrm{BFS}}, M, w$, visited, $P$)
-
-\hspace{2cm} if foundPath is True
-
-\hspace{3cm} return True
-
-\hspace{2cm} remove $(v, w)$ from $P$
-
-\hspace{1cm} return False
-
-\vspace{0.5cm}
-
-Subroutine: HopcroftKarp($X, Y, G$) \dotfill
-
-\hspace{1cm} if $|X|$ NOT equal $|Y|$ or $G$ is not $r-regular$
-
-\hspace{2cm} report NO PERFECT MATCHING
-
-\hspace{1cm} $M \leftarrow$ empty matching
-
-\hspace{1cm} $G_{\mathrm{BFS}} \leftarrow$ BFS($X, Y, M$)
-
-\hspace{1cm} disjointPaths $\leftarrow$ DFS($G_{\mathrm{BFS}}, M$)
-
-\hspace{1cm} while disjointPaths is NOT empty
-
-\hspace{2cm} augment $M$ with each $P$ in disjointPaths
-
-\hspace{2cm} $G_{\mathrm{BFS}} \leftarrow$ BFS($X, Y, M$)
-
-\hspace{2cm} disjointPaths $\leftarrow$ DFS($G_{\mathrm{BFS}}, M$)
-
-\hspace{1cm} return $M$
 
 \section{Proof of Correctness}
 \subsection{Augmenting Path Lemma}
@@ -149,7 +139,7 @@ Disjoint Path Lemma: The paths returned by the DFS subroutine are vertex disjoin
 
 \begin{figure}[!h]
     \centering
-    \includegraphics[scale=0.8]{hopcroftkarp_bfs.jpg}
+    \includegraphics[scale=0.7]{hopcroftkarp_bfs.jpg}
     \caption{Finding Augmenting Paths}
 \end{figure}
 
@@ -185,8 +175,17 @@ Since these paths will be vertex disjoint, we can say that there are at maximum 
 \end{itemize}
 So the overall time complexity is O($|E|\sqrt{|V|}$).
 
+\section{Parallel Hopcroft-Karp Algorithm}
+The main 2 components of the Hopcroft-Karp Algorithm are augmenting the matching and disjoint path finding in the bipartite graph. The augmentation of the matching is has a dependency i.e. to augment some matching, we need the matching itself. 
+
+The second component i.e. disjoint path finding again consists of a modified BFS and DFS. Attempting the BFS in a prallel manner results in the need of synchronisation between the processors at such a high level that the parallelism is negligible even when ignoring overheads. Similarly is the case for DFS. To make the paths vertex disjoint we have to make use of mutual exclusion when considering the neighbours of a vertex. This again results in overheads (checking all neighbours of a vertex before performing the recursion) in the algorithm that actually increase the time complexity. 
+
+However experiments have shown that using these techniques, an experimental speedup is obtained even with a poorer time complexity than the serial algorithm.
+
 \section{References}
 \href{https://en.wikipedia.org/wiki/Hopcroft\%E2\%80\%93Karp_algorithm}{\textcolor{blue}{Hopcroft-Karp Algorithm Wikipedia (Clickable URL)}}
+
+\href{https://people.eecs.berkeley.edu/~aydin/matchingGraft.pdf}{\textcolor{blue}{A Parallel Tree Grafting Algorithm for Maximum Cardinality Matching in Bipartite Graphs by Ariful Azad, Aydin Buluc, Alex Pothen}}
 
 
 
