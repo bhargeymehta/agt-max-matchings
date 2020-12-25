@@ -1,16 +1,16 @@
-\documentclass{article}
-\usepackage[utf8]{inputenc}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{geometry}
-\usepackage{mathtools}
-\usepackage{listings}
-\usepackage{hyperref}
-\usepackage[ruled,vlined]{algorithm2e}
-\usepackage{float}
-\geometry{margin=1in}
+% \documentclass{article}
+% \usepackage[utf8]{inputenc}
+% \usepackage{listings}
+% \usepackage{xcolor}
+% \usepackage{geometry}
+% \usepackage{mathtools}
+% \usepackage{listings}
+% \usepackage{hyperref}
+% \usepackage[ruled,vlined]{algorithm2e}
+% \usepackage{float}
+% \geometry{margin=1in}
 
-\begin{document}
+%\begin{document}
 \section{Introduction}
 We are given a complete bipartite graph $G$ with $|X|=|Y|$ such that $X$ denotes the jobs and $Y$ denotes the agents. The edge weight $w(x, y)$ of edge $e(x, y)$ denotes the cost of doing job $y$ when assigned to agent $x$.
 
@@ -155,22 +155,25 @@ This means that the matching eventually becomes a perfect matching in $G_l$ and 
 \section{Time Complexity}
 \begin{enumerate}
     \item In the augmenting path finding algorithm, the augmenting path would be found after at max O$(|V|)$ iterations of the outer loop.
-    \item The minimum of the slacks i.e. $\alpha_l$ can be found in O($|V|$) time and all the new labelling can be obtained after O($|V|$) updates. Adding $v$ to $T$ and $z$ to $S$ is constant time task Hence one single iteration takes O($|V|$) time.
-    \item The overall time complexity of the path finding algorithm is O($|V|^2$) since there are O($|V|$) iterations each costing O($|V|$) time.
+    \item The minimum of the slacks i.e. $\alpha_l$ can be found in O($|V|^2$) time and all the new labelling can be obtained after O($|V|$) updates. Adding $v$ to $T$ and $z$ to $S$ is constant time task Hence one single iteration takes O($|V|$) time.
+    \item The overall time complexity of the path finding algorithm is O($|V|^3$) since there are O($|V|$) iterations each costing O($|V|^2$) time.
     \item The Hungarian algorithm augments the matching. A single augmentation increases the size of the matching by 1 and hence there will be O($|V|$) iterations of the path finding algorithm.
 \end{enumerate}
-Thus the overall time complexity of the Hungarian algorithm would be O($|V|^3$).
+Thus the overall time complexity of the Hungarian algorithm would be O($|V|^4$).
 
-\section{Parallel Hungarian Algorithm}
+\section{Parallel Algorithm}
 Like in the above algorithms, Hungarian algorithm's path augmenting step cannot be parallelised due to the matching dependency. When considering the augmenting path algorithm, it contains finding minimum and updates of slacks.
 
-The updates of slacks can be done in parallel. Finding the minimum of the slacks in parallel can take O($\frac{|V|}{p}+p$). Thus the time complexity could then be reduced to O($|V|^2(\frac{|V|}{p}+p)$) = O($p|V|^2 + \frac{|V|^3}{p}$).
+The updates of slacks can be done in parallel. Finding the minimum of the slacks in parallel can take O($\frac{|V|^2}{p}+p$). Thus the time complexity could then be reduced to O($|V|^2(\frac{|V|^2}{p}+p)$) = O($p|V|^3 + \frac{|V|^4}{p}$).
+
+\section{Distributed Algorithm}
+The Hungarian algorithm can be distributed with the help of a central authority which can store information of O($|V|$) which it anyways has to do since the degree of a vertex in a complete bipartite graph is $\frac{|V|}{2}-1$. The intermediate matching is stored in the central vertex. It then directs other vertices to calculate their slacks and send it back. Selecting the minimum slack, it then proceeds to assign new slacks and updates the alternating tree which again can be stored in O($|V|$) space.
 
 \section{References}
 
 \begin{itemize}
-    \item \href{http://www.cse.ust.hk/~golin/COMP572/Notes/Matching.pdf}{\textcolor{blue}{Notes by Dr. Mordecai J Golin (Clickable URL)}}
+    \item \href{http://www.cse.ust.hk/~golin/COMP572/Notes/Matching.pdf}{\textcolor{blue}{Notes by Dr. Mordecai J Golin}}
 \end{itemize}
 
 
-\end{document}
+% \end{document}

@@ -1,19 +1,19 @@
-\documentclass{article}
-\usepackage[utf8]{inputenc}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{geometry}
-\usepackage{mathtools}
-\usepackage{listings}
-\usepackage{hyperref}
-\usepackage[ruled,vlined]{algorithm2e}
-\usepackage{float}
-\geometry{margin=1in}
+% \documentclass{article}
+% \usepackage[utf8]{inputenc}
+% \usepackage{listings}
+% \usepackage{xcolor}
+% \usepackage{geometry}
+% \usepackage{mathtools}
+% \usepackage{listings}
+% \usepackage{hyperref}
+% \usepackage[ruled,vlined]{algorithm2e}
+% \usepackage{float}
+% \geometry{margin=1in}
 
-\begin{document}
+% \begin{document}
 
 \section{Algorithm}
-We will be using the Hopcroft-Karp algorithm which produces a maximum matching in a bipartite graph. Note that $X$ and $Y$ are the bipartitions of the bipartite graph $G$ and $M$ is some matching of $G$. If $G$ has a perfect matching then any maximum matching is also a perfect matching.
+Note that $X$ and $Y$ are the bipartitions of the bipartite graph $G$ and $M$ is some matching of $G$.
 
 \vspace{0.5cm}
 
@@ -43,6 +43,9 @@ $Q \leftarrow$ empty Queue
         \For{each edge $(v, w)$ adjacent to $v$ such that $(v, w) \notin M$}{
             add $(v, w)$ to $G_{\mathrm{BFS}}$
         
+            \If{$w \in$ visited}{
+                skip edge
+            }
             enqueue $w$ in $Q$
         
             add $w$ to visited   
@@ -50,6 +53,10 @@ $Q \leftarrow$ empty Queue
     }\uElse{
         \For{each edge $(v, w)$ adjacent to $v$ such that $(v, w) \in M$}{
             add $(v, w)$ to $G_{\mathrm{BFS}}$
+    
+            \If{$w \in$ visited}{
+                skip edge
+            }
     
             enqueue $w$ in $Q$
     
@@ -175,19 +182,24 @@ Since these paths will be vertex disjoint, we can say that there are at maximum 
 \end{itemize}
 So the overall time complexity is O($|E|\sqrt{|V|}$).
 
-\section{Parallel Hopcroft-Karp Algorithm}
+\section{Parallel Algorithm}
 The main 2 components of the Hopcroft-Karp Algorithm are augmenting the matching and disjoint path finding in the bipartite graph. The augmentation of the matching is has a dependency i.e. to augment some matching, we need the matching itself. 
 
 The second component i.e. disjoint path finding again consists of a modified BFS and DFS. Attempting the BFS in a prallel manner results in the need of synchronisation between the processors at such a high level that the parallelism is negligible even when ignoring overheads. Similarly is the case for DFS. To make the paths vertex disjoint we have to make use of mutual exclusion when considering the neighbours of a vertex. This again results in overheads (checking all neighbours of a vertex before performing the recursion) in the algorithm that actually increase the time complexity. 
 
 However experiments have shown that using these techniques, an experimental speedup is obtained even with a poorer time complexity than the serial algorithm.
 
+\section{Distributed Algorithm}
+The algorithm can be distributed with the help of a central authority driving the phases of the algorithm performing the BFS in a synchronised manner (achieved with the help of the leader taking charge of this) and then a distributed alternating DFS while implementing look ahead strategy so that different vertices do not claim a single vertex to be part of two different augmenting paths since the paths needs to be vertex disjoint.
+
 \section{References}
-\href{https://en.wikipedia.org/wiki/Hopcroft\%E2\%80\%93Karp_algorithm}{\textcolor{blue}{Hopcroft-Karp Algorithm Wikipedia (Clickable URL)}}
+\begin{itemize}
+    \item \href{https://en.wikipedia.org/wiki/Hopcroft\%E2\%80\%93Karp_algorithm}{\textcolor{blue}{Wikipedia article on the Hopcroft-Karp Algorithm}}
+    \item \href{https://people.eecs.berkeley.edu/~aydin/matchingGraft.pdf}{\textcolor{blue}{A Parallel Tree Grafting Algorithm for Maximum Cardinality Matching in Bipartite Graphs by Ariful Azad, Aydin Buluc, Alex Pothen}}
+    \item \href{https://link.springer.com/article/10.1007\%2FBF01840395}{\textcolor{blue}{Michael M. Wu; Michael C. Loui (1990). An efficient distributed algorithm for maximum matching in general graphs}}
+\end{itemize}
 
-\href{https://people.eecs.berkeley.edu/~aydin/matchingGraft.pdf}{\textcolor{blue}{A Parallel Tree Grafting Algorithm for Maximum Cardinality Matching in Bipartite Graphs by Ariful Azad, Aydin Buluc, Alex Pothen}}
 
 
 
-
-\end{document}
+%\end{document}

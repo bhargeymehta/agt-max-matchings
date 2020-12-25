@@ -1,23 +1,18 @@
-\documentclass{article}
-\usepackage[utf8]{inputenc}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{geometry}
-\usepackage{mathtools}
-\usepackage{listings}
-\usepackage{hyperref}
-\usepackage[ruled,vlined]{algorithm2e}
-\usepackage{float}
-\geometry{margin=1in}
+% \documentclass{article}
+% \usepackage[utf8]{inputenc}
+% \usepackage{listings}
+% \usepackage{xcolor}
+% \usepackage{geometry}
+% \usepackage{mathtools}
+% \usepackage{listings}
+% \usepackage{hyperref}
+% \usepackage[ruled,vlined]{algorithm2e}
+% \usepackage{float}
+% \geometry{margin=1in}
 
-\begin{document}
+% \begin{document}
 \section{Algorithm}
-The algorithm described here is called "Blossom Algorithm" developed by Jack Edmonds. Before we describe the algorithm, we need to define certain terms which will be used in the algorithm to ease explanations.
-
-\begin{itemize}
-    \item Blossom: A cycle of odd length i.e. containing odd number of edges and odd number of nodes.
-    \item Unsaturated vertex $v$ (wrt a matching $M$ of a graph $G$): The node $v$ belongs to the graph $G$ but not present in matching $M$.
-\end{itemize}
+Note that Blossom is a cycle of odd length and unsaturated vertex $v$ (wrt a matching $M$ of a graph $G$) is a node $v$ belongs to the graph $G$ but not present in matching $M$
 
 \begin{algorithm}[!h]
 \SetAlgoLined
@@ -48,12 +43,16 @@ rootOfNode $\leftarrow$ empty node-to-node mapping
 terminals $\leftarrow$ unsaturated vertices of $G$
 
 \For{each node $v$ in terminals}{
+    Add $v$ to $F$
+    
     rootOfNode($v$) $\leftarrow v$
+}
     
-    mark all edges of $M$ in $G$
-    
+mark all edges of $M$ in $G$
+
+\For{each node $v$ in terminals}{
     \For{each unmarked edge $(v, w)$ adjacent to $v$}{
-        \uIf{$w \in M$}{
+        \uIf{$w \notin F$}{
             AddToForest($M$, $F$, $v$, $w$, terminals, rootOfNode)
         }\uElse{
             $p_w \leftarrow$ rootOfNode($w$)
@@ -249,13 +248,13 @@ Hence from the above Blossom Lemma in combination with the augmenting path lemma
     \item The constructPath subroutine takes O($N$) time since the maximum length of a path can be $N$.
     \item The liftBlossom subroutine takes O($N$) time since the maximum length of the path can be $N$ and the decision to decide the subportion of the blossom to include in lifting the path is done in constant time.
     \item The findMaxMatching function is called recursively at max $\frac{N}{2}$ times since the size of the matching increases by 2 in every recursion call. Hence the time complexity is O$(N*$ cost of findAugmentingPath subroutine)
-    \item Each call to the blossomRecursion subroutine will take at max O($N$) time since in each call the cost is equal to the size of the blossom found. The sum of size of all blossom cannot be more than $N$ since after each call the nodes are contracted and hence over counting cannot happen. Hence the top-level call will take O($N$) time.
-    \item The number of iterations of loop over the edges in findAugmenting path is bound by $M$. See that addToForest subroutine takes O(1) time, constructPath subroutine takes O($N$) time and the blossomRecursion subroutine takes O$(N)$ time. Hence each iteration takes O$(1+N+N)$ = O($N$) time. Hence the time complexity is O$(M*N)$.
+    \item Each call to the blossomRecursion subroutine will take at max O($N+M$) time barring the recursion since in each call the cost is equal to the size of the blossom found.
+    \item In each call to the augmenting path finding algorithm, we either find a blossom and recurse or we find an augmenting path and return. We call the work done (traversing the edges and contraction of blossom) of O($N+M$) in the algorithm except the recursion work as a sub phase. Hence each recursion is a sub phase. There will be at most $O(N)$ sub phases. Hence the cost is O$(NM)$
 \end{itemize}
 
 Finally plug the above result in time complexity of findMaxMatching function. Hence overall time complexity of the entire algorithm is O$(N * O(M*N)) = $ O($N^2M$).
 
-\section{Parallel Blossom Algorithm}
+\section{Parallel Algorithm}
 Now in the core subroutine given below, the outer for loop which iterates over vertices $v$ can't be parallelised since after each iteration, the state of the tree changes and hence there is an inherent dependency. However the inner loop which iterates over the adjacent edges of some vertex $v$ can be done in parallel. However in the sequential version, after processing one edge, we may either find a path (without the need of a Blossom Recursion) or we find no augmenting path and there is some blossom or there is no augmenting path. So if we allow each iteration to modify the forest in parallel, the state of the forest becomes inconsistent if one iteration finds a path and other doesn't. Hence we have to delay the actual modification of the forest until all edges have been processed. Note that this implies that we can't use the AddToForest subroutine.
 
 \begin{algorithm}[!h]
@@ -270,14 +269,19 @@ rootOfNode $\leftarrow$ empty node-to-node mapping
 terminals $\leftarrow$ unsaturated vertices of $G$
 
 \For{each node $v$ in terminals}{
-    rootOfNode($v$) $\leftarrow v$
+    Add $v$ to $F$
     
-    mark all edges of $M$ in $G$
+    rootOfNode($v$) $\leftarrow v$
+}
+
+mark all edges of $M$ in $G$
+
+\For{each node $v$ in terminals}{
     
     \textcolor{red}{temp $\leftarrow$ empty map}
     
     \For{each unmarked edge $(v, w)$ adjacent to $v$ \textcolor{red}{in PARALLEL}}{
-        \uIf{$w \in M$}{
+        \uIf{$w \notin F$}{
             \textcolor{red}{$x \leftarrow$ node adjacent to $w$ in $M$}
         
             \textcolor{red}{temp($w$) $\leftarrow x$}
@@ -386,18 +390,101 @@ Suppose two edges $(v, w_i)$ and $(v, w_j)$ are some two edges. Their correspond
 \subsection{Time Complexity}
 \begin{itemize}
     \item There will be at max O($|V|$) iterations of the main algorithm since a matching of size at max $\frac{|V|}{2}$ is possible.
-    \item We are now iterating over all the nodes hence there will be O($|V|$) iterations of the outer loop in the augmenting path finding algorithm. 
-    \item Except the blossom recursion, the rest of task is done in constant time in each of the parallel iterations. For $p$ processors, it would take $\frac{|V|}{p}$ iterations. 
-    \item In the blossom recursion, we are first constructing the blossom which is an O$(|V|)$ task when considering all the levels of the recursion. Once the blossom is constructed, the contraction can be done in parallel taking O($\frac{|E|}{p}$) time.
+    \item We now again examine the work done in each sub phase of the algorithm. We have to iterate over all the vertices and then their edges in parallel. This means work of O($|V|\frac{|V|}{p}$).
+    \item In the same sub phase, the work done by the blossom recursion is O($|V|+\frac{|E|}{p}$) since the blossom identification cannot be parallelised.
+    \item Each sub phase thus takes O($|V|+|V|\frac{|V|}{p} + \frac{|E|}{p}$) task. There can be at most O($V$) of these sub phases. Hence total time of the augmenting path finding algorithm takes O($|V|^2 + \frac{|V|^3}{p} + \frac{|V||E|}{p}$)
 \end{itemize}
-Hence the overall time complexity would be O($|V| \times |V| \times \frac{|V|}{p} \times (|V|+\frac{E}{p})$) = O$(|V|^3 + \frac{|V|^4}{p} + \frac{|V||E|}{|p|^2})$.
+Hence the overall time complexity would be O($|V| \times (|V|^2 + \frac{|V|^3}{p} + \frac{|V||E|}{p})$) = O$(|V|^3 + \frac{|V|^4}{p} + \frac{|V|^2|E|}{|p|^2})$.
+
+\section{Distributed Algorithm}
+As discussed earlier, due to the sequential nature of the algorithm, it is very difficult to parallelise the blossom algorithm. In the blossom contraction, several edges have to be collapsed into a single node. This requires that the graph be modified and further recursions be applied upon this modified graph. 
+
+In a distributed setting this requires some central authority that handles this contraction. We will be using 2 algorithms $A_1$ and $A_2$. $A_1$ rebuilds the graph locally be obtaining the information from the network and then applies $A_2$ locally to produce the required result. 
+
+The algorithm $A_2$ would be the blossom algorithm in our case. We are assuming that a single vertex can contain the information of the entire network and there is a authority vertex which drives the collection of the network information and then runs the blossom algorithm locally.
+
+\begin{algorithm}[!h]
+\caption{$A_1$: Build network}
+\KwData{authority vertex id $v_a$ and own id $v$}
+
+$C \leftarrow $ empty set
+
+\uIf{$v == v_a$}{
+    $p \leftarrow $ NULL
+    
+    \For{each adjacent $w$}{
+        send DISCOVER msg
+    }
+    \For{each adjacent $w$}{
+        receive DISCOVERY\_RESULT
+        
+        \If{DISCOVERY\_RESULT is accepted}{
+            add $w$ to $C$    
+        }
+    }
+    \For{each adjacent $w$}{
+        receive DISCOVER msg
+        
+        send DISCOVERY\_REJECTED to $w$
+    }
+    \For{each $c_i \in C$}{
+        receive ADJACENCY\_INFO from $c_i$
+    }
+    run the BLOSSOM ALGORITHM locally
+    
+    print the result and shut down
+}\uElse{
+    receive 1 DISCOVER msg from some $w$
+    
+    send DISCOVERY\_ACCEPTED to $w$
+    
+    $p \leftarrow w$
+    
+    \For{each adjacent $w$ except $p$}{
+        send DISCOVER msg
+    }
+    \For{each adjacent $w$ except $p$}{
+        receive DISCOVERY\_RESULT
+        
+        \If{DISCOVERY\_RESULT is accepted}{
+            add $w$ to $C$
+        }
+    }
+    \For{each adjacent $w$ except $p$}{
+        receive DISCOVER msg
+        
+        send DISCOVERY\_REJECTED to $w$
+    }
+    
+    subTreeInfo $\leftarrow$ NULL
+    
+    \For{each $c_i \in C$}{
+        receive ADJACENCY\_INFO from $c_i$
+        
+        subTreeInfo $\leftarrow$ subTreeInfo $\cup$ ADJACENCY\_INFO 
+    }
+    
+    send subTreeInfo to $p$ and shut down
+}
+\end{algorithm}
+
+\subsection{Correctness and Message Complexity}
+The algorithm works by sending a discovery message to all adjacent neighbours. Neighbours which have not been discovered would then reply their parents with an accepted response. This way a parent-child relationship is established which forms a DFS tree in the network. 
+
+Now the vertex itself sends discovery message to its neighbours to determine its children and so on. Any new discovery message is responded with a discovery reject response.
+
+In this DFS network, the leaf nodes will first send their adjacency info to their parents since their child set $C$ would be empty. The vertices which are internal will wait for all children to send them adjacency information. This would contain the the network information of all the children, grand-children etc of that vertex. This vertex now unions this information with its own adjacency list and then forwards it to their parent. In this way the entire network is now accumulated at the driver node $v_a$ which then runs the blossom algorithm locally.
+
+Along each edge we have 3 messages- discovery, discovery result and adjacency information hence the message complexity of the algorithm would be O($3|E|$).
+
+
 
 \section{References}
 \begin{itemize}
-    \item \href{https://stanford.edu/~rezab/classes/cme323/S16/projects_reports/shoemaker_vare.pdf}{\color{blue} Blossom Algorithm Analysis by Amy Shoemaker \& Sagar Vare (Clickable URL)}
-    \item \href{https://en.wikipedia.org/wiki/Blossom_algorithm}{\color{blue} Wikipedia Blossom Algorithm (Clickable URL)}
+    \item \href{https://stanford.edu/~rezab/classes/cme323/S16/projects_reports/shoemaker_vare.pdf}{\color{blue} Blossom Algorithm Analysis by Amy Shoemaker \& Sagar Vare}
+    \item \href{https://en.wikipedia.org/wiki/Blossom_algorithm}{\color{blue} Wikipedia Blossom Algorithm}
 \end{itemize}
 
 
 
-\end{document}
+%\end{document}
